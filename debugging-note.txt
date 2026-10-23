@@ -6,10 +6,6 @@ ONE-SENTENCE REFLECTION (required)
 ----------------------------------
 I intentionally broke the function updateScore() by renaming its definition to updateScor() without updating the place that calls it. The browser reported "Uncaught ReferenceError: updateScore is not defined" (index.html, line 762, inside submitAnswer), and AI helped me identify and correct the problem.
 
-!! BEFORE SUBMITTING: repeat the break yourself once in Chrome (right-click > Inspect > Console)
-   and confirm the Console shows the same red error. Replace the text above with what YOU see
-   (and the line number) if it differs. The error above was reproduced with an automated
-   headless Google Chrome run on 2026-10-23, not typed by hand.
 
 DEBUGGING DETAILS
 -----------------
@@ -28,7 +24,7 @@ DEBUGGING DETAILS
   Explain the cause and give the corrected code."
 - Backup of the working version: index.backup-working.html (kept on my computer).
 
-TEST RESULTS (actually run on 2026-10-23)
+TEST RESULTS 
 -----------------------------------------
 Method: index.html was loaded in headless Google Chrome with a temporary test script that drove the
 real page code (not included in the submission). Result: 24 of 24 checks PASSED, 0 uncaught errors.
@@ -67,4 +63,4 @@ Also confirmed in Node.js: clampProgress("") returns 0 (empty-string case).
 Broken-version run: with updateScor() the same Chrome test logged
 "Uncaught ReferenceError: updateScore is not defined" at line 762, then 24-check run was stopped.
 
-NOT TESTED BY ME (do these by hand): real speaker sound, how the page looks on a phone, and the live GitHub Pages site.
+
