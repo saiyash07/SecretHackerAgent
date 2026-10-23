@@ -1,0 +1,889 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Secret Agent Hacker Terminal – Student #150096725136</title>
+<meta name="description" content="Secret Agent Hacker Terminal and Mini-Game. A fully simulated, light-theme cyberpunk terminal by Saiyash Poojari.">
+<style>
+/* ===== Theme (light cyberpunk) ===== */
+:root {
+  --bg: #f3f8f5;
+  --panel: rgba(255, 255, 255, 0.92);
+  --ink: #0d2a1c;
+  --green: #0a7a3d;
+  --green-bright: #12b35a;
+  --cyan: #007e9e;
+  --red: #d62839;
+  --amber: #a86400;
+  --dim: #5d7a6b;
+  --line: #bfe0cd;
+  --glow: 0 0 10px rgba(18, 179, 90, 0.35);
+  --mono: "Courier New", Consolas, Menlo, monospace;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; min-height: 100%; }
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--mono);
+  line-height: 1.45;
+}
+#rain { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 0; }
+.app { position: relative; z-index: 1; max-width: 1180px; margin: 0 auto; padding: 14px 16px 28px; }
+
+/* ===== Header ===== */
+header.top {
+  background: var(--panel);
+  border: 1px solid var(--green-bright);
+  border-radius: 10px;
+  padding: 12px 16px;
+  box-shadow: var(--glow);
+  display: flex; flex-wrap: wrap; gap: 10px 20px; align-items: center; justify-content: space-between;
+}
+.badge { color: var(--red); font-weight: bold; letter-spacing: 1px; font-size: 0.95rem; }
+h1 { margin: 2px 0 0; font-size: clamp(1.1rem, 3.4vw, 1.7rem); color: var(--green); text-shadow: var(--glow); }
+.who { color: var(--cyan); font-size: 0.9rem; }
+.tools { display: flex; gap: 8px; flex-wrap: wrap; }
+
+/* ===== Buttons ===== */
+button {
+  font: inherit; cursor: pointer; color: var(--green);
+  background: #fff; border: 1px solid var(--green-bright); border-radius: 6px;
+  padding: 7px 12px; transition: transform .15s, box-shadow .15s, background .15s, color .15s;
+}
+button:hover { background: var(--green-bright); color: #fff; box-shadow: var(--glow); transform: translateY(-1px); }
+button:active { transform: translateY(1px); }
+button:focus-visible, input:focus-visible { outline: 3px solid var(--cyan); outline-offset: 2px; }
+button.danger { color: var(--red); border-color: var(--red); }
+button.danger:hover { background: var(--red); color: #fff; }
+button:disabled { opacity: .5; cursor: not-allowed; transform: none; box-shadow: none; }
+
+/* ===== Layout ===== */
+main { display: grid; grid-template-columns: 1.5fr 1fr; gap: 14px; margin-top: 14px; }
+@media (max-width: 900px) { main { grid-template-columns: 1fr; } }
+.panel {
+  background: var(--panel); border: 1px solid var(--line); border-radius: 10px;
+  padding: 12px 14px; box-shadow: 0 2px 10px rgba(10, 122, 61, 0.08);
+}
+.panel h2 { margin: 0 0 8px; font-size: 1rem; color: var(--cyan); letter-spacing: 1px; }
+.side { display: flex; flex-direction: column; gap: 14px; }
+
+/* ===== Terminal ===== */
+.terminal { border-color: var(--green-bright); box-shadow: var(--glow); }
+#output {
+  height: 380px; overflow-y: auto; background: #fbfffc; border: 1px solid var(--line);
+  border-radius: 6px; padding: 10px; font-size: 0.9rem; word-break: break-word;
+}
+@media (max-width: 600px) { #output { height: 300px; } }
+#output div { white-space: pre-wrap; }
+.cmd { color: var(--ink); font-weight: bold; }
+.ok { color: var(--green); }
+.err { color: var(--red); }
+.info { color: var(--cyan); }
+.warn { color: var(--amber); }
+.dim { color: var(--dim); }
+.pbar { display: flex; align-items: center; gap: 8px; }
+.pbar .track { flex: 1; height: 12px; background: #e3f1e9; border: 1px solid var(--green-bright); border-radius: 6px; overflow: hidden; }
+.pbar .fill { display: block; height: 100%; width: 0; background: linear-gradient(90deg, var(--green-bright), var(--cyan)); transition: width .25s ease; }
+form.prompt { display: flex; align-items: center; gap: 8px; margin-top: 8px; border: 1px solid var(--green-bright); border-radius: 6px; padding: 4px 8px; background: #fff; }
+form.prompt label { color: var(--green); white-space: nowrap; font-weight: bold; }
+form.prompt input { flex: 1; min-width: 0; border: 0; background: transparent; font: inherit; font-size: 16px; color: var(--ink); padding: 6px 2px; caret-color: transparent; }
+.cursor { width: 9px; height: 1.1em; background: var(--green-bright); animation: blink 1s steps(1) infinite; }
+@keyframes blink { 50% { opacity: 0; } }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.chips button { padding: 4px 9px; font-size: 0.85rem; }
+
+/* ===== Status ===== */
+.meter { margin: 8px 0; font-size: 0.85rem; }
+.meter .row { display: flex; justify-content: space-between; }
+.meter .track { height: 10px; background: #e3f1e9; border-radius: 5px; overflow: hidden; border: 1px solid var(--line); }
+.meter .fill { height: 100%; width: 0; background: var(--green-bright); transition: width 1s ease, background .3s; }
+.meter .fill.hot { background: var(--red); }
+
+/* ===== Game ===== */
+.cipher { font-size: 1.15rem; letter-spacing: 2px; color: var(--red); background: #fff6f6; border: 1px dashed var(--red); border-radius: 6px; padding: 10px; word-break: break-word; margin: 6px 0; }
+.gamerow { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
+.gamerow input { flex: 1; min-width: 130px; font: inherit; font-size: 16px; padding: 7px; border: 1px solid var(--green-bright); border-radius: 6px; text-transform: uppercase; }
+#score { font-weight: bold; color: var(--green); display: inline-block; }
+#score.pulse { animation: pulse .5s; }
+@keyframes pulse { 50% { transform: scale(1.5); color: var(--cyan); } }
+#gameMsg { min-height: 1.4em; margin-top: 6px; font-weight: bold; }
+.helpbox ul { margin: 0; padding-left: 18px; font-size: 0.85rem; }
+.helpbox code { color: var(--green); font-weight: bold; }
+
+/* ===== Overlays ===== */
+.overlay {
+  position: fixed; inset: 0; z-index: 10; display: flex; align-items: center; justify-content: center;
+  background: rgba(243, 248, 245, 0.9); padding: 16px; text-align: center;
+}
+.overlay.hidden { display: none; }
+.card { max-width: 560px; background: #fff; border: 2px solid var(--green-bright); border-radius: 12px; padding: 22px; box-shadow: 0 0 24px rgba(18, 179, 90, 0.35); animation: rise .6s ease; }
+@keyframes rise { from { opacity: 0; transform: translateY(20px); } }
+.card h2 { color: var(--green); font-size: clamp(1.2rem, 4vw, 1.8rem); margin: 6px 0; }
+.card ol { text-align: left; font-size: 0.9rem; }
+.card button.big { font-size: 1.05rem; padding: 10px 22px; margin-top: 8px; animation: glow 1.6s infinite; }
+@keyframes glow { 50% { box-shadow: 0 0 18px var(--green-bright); } }
+#egg { background: rgba(0, 20, 12, 0.88); color: #3dffa0; font-size: clamp(1.2rem, 5vw, 2.4rem); text-shadow: 0 0 12px #3dffa0; }
+#egg .sub { font-size: 1rem; color: #7ee8ff; margin-top: 12px; }
+
+/* ===== Effects ===== */
+body.hacking .terminal { animation: shake .12s infinite; border-color: var(--red); box-shadow: 0 0 18px rgba(214, 40, 57, 0.5); }
+@keyframes shake { 25% { transform: translate(1px, -1px); } 75% { transform: translate(-1px, 1px); } }
+.glitch { animation: glitch .3s steps(2) 2; }
+@keyframes glitch { 50% { text-shadow: 2px 0 var(--red), -2px 0 var(--cyan); } }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
+</style>
+</head>
+<body>
+<canvas id="rain" aria-hidden="true"></canvas>
+
+<!-- Opening screen -->
+<div class="overlay" id="intro" role="dialog" aria-modal="true" aria-labelledby="introTitle">
+  <div class="card">
+    <div class="badge">Created by Student #150096725136</div>
+    <h2 id="introTitle">SECRET AGENT HACKER TERMINAL</h2>
+    <div class="who">Saiyash Poojari &middot; Unit 3 &mdash; AI Applications &middot; CO3-P</div>
+    <ol>
+      <li>Type <b>help</b> in the terminal and press <b>Enter</b>.</li>
+      <li>Try <b>scan</b>, <b>decrypt</b> and <b>hack</b> for animated simulations.</li>
+      <li>Type <b>game</b> to play the Secret Cipher mini-game.</li>
+      <li>Find the hidden Easter egg for a bonus!</li>
+    </ol>
+    <p class="dim">Everything here is a harmless simulation. No real systems are touched.</p>
+    <button class="big" id="startBtn" type="button">&#9654; ENTER TERMINAL</button>
+  </div>
+</div>
+
+<!-- Easter egg overlay -->
+<div class="overlay hidden" id="egg" aria-live="assertive">
+  <div><div id="eggText"></div><div class="sub">Bonus unlocked: +50 points</div></div>
+</div>
+
+<div class="app">
+  <header class="top">
+    <div>
+      <div class="badge">Created by Student #150096725136</div>
+      <h1>The Secret Agent Hacker Terminal &amp; Mini-Game</h1>
+      <div class="who">Saiyash Poojari &middot; Unit 3 &mdash; AI Applications &middot; CO3-P</div>
+    </div>
+    <div class="tools">
+      <button id="soundBtn" type="button" aria-pressed="true" aria-label="Toggle sound effects">&#128266; Sound: ON</button>
+      <button id="resetBtn" type="button" class="danger" aria-label="Reset the whole application">&#8635; Reset</button>
+    </div>
+  </header>
+
+  <main>
+    <section class="panel terminal" aria-label="Hacker terminal">
+      <h2>&gt;_ TERMINAL</h2>
+      <div id="output" role="log" aria-live="polite" aria-label="Terminal output" tabindex="0"></div>
+      <form class="prompt" id="cmdForm" autocomplete="off">
+        <label for="cmdInput" id="promptLabel">agent@sim:~$</label>
+        <input id="cmdInput" type="text" maxlength="60" spellcheck="false" autocapitalize="off" aria-label="Command input. Type a command and press Enter">
+        <span class="cursor" aria-hidden="true"></span>
+      </form>
+      <div class="chips" id="chips" aria-label="Quick command buttons"></div>
+    </section>
+
+    <div class="side">
+      <section class="panel" aria-label="System status">
+        <h2>SYSTEM STATUS <span class="dim">(simulated)</span></h2>
+        <div id="meters"></div>
+      </section>
+
+      <section class="panel" aria-label="Secret cipher mini-game" id="gamePanel">
+        <h2>SECRET CIPHER GAME &nbsp; Score: <span id="score">0</span></h2>
+        <div class="dim" id="gameHint">Decode the message below.</div>
+        <div class="cipher" id="cipherText" aria-live="polite"></div>
+        <div class="gamerow">
+          <input id="answerInput" type="text" maxlength="60" autocomplete="off" aria-label="Your decoded answer">
+          <button id="submitBtn" type="button">Submit</button>
+        </div>
+        <div class="gamerow">
+          <button id="hintBtn" type="button">Hint</button>
+          <button id="nextBtn" type="button">Next challenge</button>
+          <button id="restartGameBtn" type="button">Restart game</button>
+        </div>
+        <div id="gameMsg" role="status" aria-live="polite"></div>
+      </section>
+
+      <section class="panel helpbox" aria-label="Command help">
+        <h2>COMMAND HELP</h2>
+        <ul>
+          <li><code>help</code> list commands</li>
+          <li><code>scan</code> <code>status</code> <code>decrypt</code> <code>hack</code></li>
+          <li><code>date</code> <code>about</code> <code>secret</code> <code>game</code></li>
+          <li><code>clear</code> wipe the screen &middot; <code>sound</code> toggle audio</li>
+          <li>Use &uarr; / &darr; for command history.</li>
+        </ul>
+      </section>
+    </div>
+  </main>
+</div>
+
+<script>
+"use strict";
+
+/* =====================================================================
+   SECTION 1 — Small helpers
+   ===================================================================== */
+const $ = (id) => document.getElementById(id);
+const STUDENT_NUMBER = "150096725136";
+const STUDENT_NAME = "Saiyash Poojari";
+
+/* =====================================================================
+   SECTION 2 — Progress maths (the function covered by the unit tests)
+   ===================================================================== */
+
+// Turns any value into a safe progress number from 0 to 100.
+// Empty strings, null, NaN, text, Infinity and negatives all become 0; anything above 100 becomes 100.
+function clampProgress(value) {
+  const n = (typeof value === "string" && value.trim() === "") ? 0 : Number(value);
+  if (!Number.isFinite(n)) return 0;
+  return Math.min(100, Math.max(0, n));
+}
+
+// Percentage of steps finished, always safe (total 0 gives 0, not NaN).
+function stepsToPercent(done, total) {
+  if (!(total > 0)) return 0;
+  return clampProgress((done / total) * 100);
+}
+
+// ---- Automated unit tests: run once when the page loads (check the Console) ----
+console.assert(clampProgress(50) === 50, "Unit test 1 failed: clampProgress(50) should return 50 (normal input)");
+console.assert(clampProgress(0) === 0, "Unit test 2 failed: clampProgress(0) should return 0 (zero input)");
+console.assert(clampProgress(-10) === 0, "Unit test 3 failed: clampProgress(-10) should return 0 (negative input)");
+
+/* =====================================================================
+   SECTION 3 — Sound effects (Web Audio API, created only after a click)
+   ===================================================================== */
+let audioCtx = null;
+let soundOn = true;
+
+// Returns an AudioContext or null when muted/unsupported. Never throws.
+function getAudio() {
+  if (!soundOn) return null;
+  try {
+    if (!audioCtx) {
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return null;
+      audioCtx = new AC();
+    }
+    if (audioCtx.state === "suspended") audioCtx.resume();
+    return audioCtx;
+  } catch (e) {
+    return null;
+  }
+}
+
+// Plays one short beep. delay is in seconds.
+function tone(freq, dur, type, vol, delay) {
+  const ctx = getAudio();
+  if (!ctx) return;
+  try {
+    const t0 = ctx.currentTime + (delay || 0);
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = type || "square";
+    osc.frequency.value = freq;
+    gain.gain.setValueAtTime(vol || 0.04, t0);
+    gain.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+    osc.connect(gain).connect(ctx.destination);
+    osc.start(t0);
+    osc.stop(t0 + dur + 0.02);
+  } catch (e) { /* audio is optional; ignore failures */ }
+}
+
+const sfx = {
+  key()   { tone(660, 0.04, "square", 0.02); },
+  ok()    { tone(520, 0.08); tone(780, 0.12, "square", 0.04, 0.09); },
+  error() { tone(160, 0.25, "sawtooth", 0.05); },
+  glitch() { for (let i = 0; i < 5; i++) tone(120 + Math.random() * 900, 0.05, "sawtooth", 0.03, i * 0.05); },
+  win()   { [523, 659, 784, 1047].forEach((f, i) => tone(f, 0.18, "triangle", 0.06, i * 0.12)); }
+};
+
+function setSound(on) {
+  soundOn = on;
+  const btn = $("soundBtn");
+  btn.setAttribute("aria-pressed", String(on));
+  btn.textContent = on ? "🔊 Sound: ON" : "🔇 Sound: MUTED";
+  if (on) sfx.ok();
+}
+
+/* =====================================================================
+   SECTION 4 — Matrix rain background
+   ===================================================================== */
+const rainCanvas = $("rain");
+const rctx = rainCanvas.getContext("2d");
+const RAIN_CHARS = "01アイウエオカキクケコサシスセソ<>/\\{}[]#$%&=+*";
+const FONT_SIZE = 16;
+const FRAME_MS = 50;        // about 20 frames per second keeps the page fast
+let drops = [];              // one number per column: how many rows down that column's "raindrop" is
+let lastFrame = 0;
+let rainHandle = 0;
+let rainMode = "normal";     // "normal" (green) or "neo" (Easter egg colours)
+
+// Matches the canvas to the window and gives every column a random starting height.
+function resizeRain() {
+  rainCanvas.width = window.innerWidth;
+  rainCanvas.height = window.innerHeight;
+  const columns = Math.ceil(rainCanvas.width / FONT_SIZE);
+  drops = Array.from({ length: columns }, () => -Math.floor(Math.random() * 40));
+  rctx.fillStyle = "#f3f8f5";
+  rctx.fillRect(0, 0, rainCanvas.width, rainCanvas.height);
+}
+
+// ANALOGY: Imagine the page is a big window on a rainy day, and every column of
+// characters is a raindrop sliding down the glass. The browser is a very fast
+// window-cleaner: about 20 times a second it wipes the glass with a thin, almost-clear
+// layer of paint (the semi-transparent fillRect), so older letters fade into a ghostly
+// tail. Then it moves each drop ONE row lower (drops[i]++) and writes a fresh random
+// letter at its new spot. When a drop slides off the bottom, it randomly pops back to
+// the top, like a new raindrop forming. requestAnimationFrame is the "next frame
+// please" signal that keeps the rain falling forever without freezing the page.
+function drawMatrixRain(now) {
+  rainHandle = requestAnimationFrame(drawMatrixRain);
+  if (now - lastFrame < FRAME_MS) return;   // skip frames to stay light on the CPU
+  lastFrame = now;
+
+  rctx.fillStyle = "rgba(243, 248, 245, 0.16)";   // fade the old letters
+  rctx.fillRect(0, 0, rainCanvas.width, rainCanvas.height);
+  rctx.font = FONT_SIZE + "px monospace";
+
+  for (let i = 0; i < drops.length; i++) {
+    if (drops[i] >= 0) {
+      const ch = RAIN_CHARS.charAt(Math.floor(Math.random() * RAIN_CHARS.length));
+      if (rainMode === "neo") {
+        rctx.fillStyle = (i % 3 === 0) ? "#d62839" : "#007e9e";
+      } else {
+        rctx.fillStyle = (i % 7 === 0) ? "#007e9e" : "#12b35a";
+      }
+      rctx.fillText(ch, i * FONT_SIZE, drops[i] * FONT_SIZE);
+    }
+    if (drops[i] * FONT_SIZE > rainCanvas.height && Math.random() > 0.975) drops[i] = 0;
+    drops[i]++;
+  }
+}
+
+function startRain() {
+  if (rainHandle) return;
+  rainHandle = requestAnimationFrame(drawMatrixRain);
+}
+function stopRain() {
+  cancelAnimationFrame(rainHandle);
+  rainHandle = 0;
+}
+
+let resizeTimer = 0;
+window.addEventListener("resize", () => {
+  clearTimeout(resizeTimer);               // debounce: resize once the user stops dragging
+  resizeTimer = setTimeout(resizeRain, 150);
+});
+// Pause the animation when the tab is hidden to save battery/CPU.
+document.addEventListener("visibilitychange", () => {
+  if (document.hidden) stopRain(); else startRain();
+});
+
+/* =====================================================================
+   SECTION 5 — Terminal output and safe timers
+   ===================================================================== */
+const output = $("output");
+const cmdInput = $("cmdInput");
+const PROMPT = "agent@sim:~$";
+const MAX_LINES = 400;
+
+let busy = false;            // true while an animated simulation is running
+let timers = [];             // every pending setTimeout so Reset can cancel them
+let history = [];
+let historyPos = 0;
+
+// Adds one line to the terminal. textContent is used so input can never inject HTML.
+function printLine(text, cls) {
+  const line = document.createElement("div");
+  line.textContent = text;
+  if (cls) line.className = cls;
+  output.appendChild(line);
+  while (output.childNodes.length > MAX_LINES) output.removeChild(output.firstChild);
+  output.scrollTop = output.scrollHeight;
+  return line;
+}
+
+// setTimeout wrapper that remembers the id so we can cancel everything on reset.
+function later(fn, ms) {
+  const id = setTimeout(() => {
+    timers = timers.filter((t) => t !== id);
+    fn();
+  }, ms);
+  timers.push(id);
+}
+function cancelAllTimers() {
+  timers.forEach(clearTimeout);
+  timers = [];
+}
+
+// Creates an animated progress bar inside the terminal; returns a setter function.
+function makeProgressBar() {
+  const row = document.createElement("div");
+  row.className = "pbar";
+  const track = document.createElement("span");
+  track.className = "track";
+  const fill = document.createElement("span");
+  fill.className = "fill";
+  const label = document.createElement("span");
+  label.textContent = "0%";
+  track.appendChild(fill);
+  row.append(track, label);
+  output.appendChild(row);
+  output.scrollTop = output.scrollHeight;
+  return (pct) => {
+    const p = Math.round(clampProgress(pct));
+    fill.style.width = p + "%";
+    label.textContent = p + "%";
+  };
+}
+
+// Plays a list of fake steps one by one while a progress bar fills 0% to 100%.
+// busy stops two simulations from running at once.
+function runSequence(steps, stepMs, onDone) {
+  busy = true;
+  cmdInput.setAttribute("aria-busy", "true");
+  const setBar = makeProgressBar();
+  let i = 0;
+  function tick() {
+    if (i >= steps.length) {
+      setBar(100);
+      busy = false;
+      cmdInput.removeAttribute("aria-busy");
+      onDone();
+      return;
+    }
+    printLine(steps[i], "info");
+    i++;
+    setBar(stepsToPercent(i, steps.length));
+    sfx.key();
+    later(tick, stepMs);
+  }
+  tick();
+}
+
+/* =====================================================================
+   SECTION 6 — Terminal commands
+   ===================================================================== */
+const commands = new Map();
+
+commands.set("help", () => {
+  printLine("AVAILABLE COMMANDS", "info");
+  [
+    ["help", "show this list"],
+    ["scan", "run a fictional system scan"],
+    ["status", "show simulated system status"],
+    ["decrypt", "start a fictional decryption"],
+    ["hack", "run the simulated hacking animation"],
+    ["clear", "clear the terminal"],
+    ["date", "show date and time"],
+    ["secret", "unlock a hidden message"],
+    ["game", "play the cipher mini-game"],
+    ["about", "about this project"],
+    ["sound", "toggle sound on/off"],
+    ["reset", "reset everything"]
+  ].forEach(([n, d]) => printLine("  " + n.padEnd(9) + "- " + d, "ok"));
+});
+
+commands.set("scan", () => {
+  printLine("[SIMULATION] Starting fictional system scan...", "warn");
+  runSequence([
+    "Pinging virtual node 10.0.0.1 ... alive",
+    "Checking imaginary ports ... 3 open",
+    "Analysing fake firmware ... clean",
+    "Counting rubber ducks in the server room ... 42",
+    "Scan complete."
+  ], 450, () => { printLine("[OK] No threats found. (All data is pretend.)", "ok"); sfx.ok(); });
+});
+
+commands.set("status", () => {
+  printLine("SYSTEM STATUS (simulated)", "info");
+  statusData.forEach((m) => printLine("  " + m.label.padEnd(9) + Math.round(m.value) + "%", m.value > 85 ? "err" : "ok"));
+  printLine("  Uptime   " + Math.floor((Date.now() - bootTime) / 1000) + "s", "dim");
+});
+
+commands.set("decrypt", () => {
+  printLine("[SIMULATION] Decrypting fictional file SECRET_PLANS.enc ...", "warn");
+  runSequence([
+    "Loading cipher keys ...",
+    "Trying key 0x4F2A ... no",
+    "Trying key 0x91BC ... no",
+    "Trying key 0xC0DE ... match!",
+    "Unscrambling data blocks ..."
+  ], 500, () => {
+    printLine("[OK] Decrypted: \"The pizza party is at midnight.\"", "ok");
+    sfx.ok();
+  });
+});
+
+commands.set("hack", () => {
+  printLine("[SIMULATION ONLY] Initiating pretend hack of the Mainframe of Imagination...", "warn");
+  document.body.classList.add("hacking");
+  sfx.glitch();
+  runSequence([
+    "Bypassing imaginary firewall ...",
+    "Injecting harmless packets ...",
+    "Cracking password: hunter2 ... nope, 'password123'",
+    "Hiding footprints behind fake proxies ...",
+    "Downloading 0 bytes of nothing ...",
+    "Overriding pretend security ...",
+    "Escalating to totally fictional root ..."
+  ], 600, () => {
+    document.body.classList.remove("hacking");
+    printLine("ACCESS GRANTED (this was only a simulation).", "ok glitch");
+    printLine("No real system was touched. You are a legend.", "dim");
+    sfx.win();
+  });
+});
+
+commands.set("clear", () => { output.textContent = ""; });
+
+commands.set("date", () => { printLine(new Date().toLocaleString(), "ok"); });
+
+commands.set("secret", () => {
+  printLine("Classified: 'The best agents read the README.'", "info");
+  printLine("Hint: some doors open when you whisper the name of the chosen one...", "dim");
+  sfx.glitch();
+});
+
+commands.set("game", () => {
+  printLine("SECRET CIPHER GAME: decode each scrambled message in the Game panel.", "info");
+  printLine("Correct answer = +10 points (+5 if you used the hint).", "dim");
+  $("gamePanel").scrollIntoView({ behavior: "smooth", block: "center" });
+  $("answerInput").focus();
+});
+
+commands.set("about", () => {
+  printLine("The Secret Agent Hacker Terminal & Mini-Game", "info");
+  printLine("Created by Student #" + STUDENT_NUMBER + " (" + STUDENT_NAME + ")", "ok");
+  printLine("Unit 3 - AI Applications | CO3-P | HTML + CSS + vanilla JavaScript.", "ok");
+  printLine("Everything is a harmless simulation.", "dim");
+});
+
+commands.set("sound", () => { setSound(!soundOn); printLine("Sound is now " + (soundOn ? "ON" : "MUTED") + ".", "ok"); });
+
+commands.set("reset", () => { resetAll(); });
+
+// Hidden Easter egg command (not listed in help). See README for how to find it.
+commands.set("neo", () => { triggerEasterEgg(); });
+
+// These commands may run even while an animation is playing.
+const ALLOWED_WHILE_BUSY = ["help", "status", "date", "about", "game", "clear", "sound"];
+
+// Reads one line from the user, validates it and runs the matching command.
+function runCommand(raw) {
+  const text = String(raw == null ? "" : raw).trim();
+  if (text === "") {
+    printLine("Empty command. Type 'help' to see what you can do.", "warn");
+    sfx.error();
+    return;
+  }
+  printLine(PROMPT + " " + text, "cmd");
+  if (history[history.length - 1] !== text) history.push(text);
+  historyPos = history.length;
+
+  const name = text.toLowerCase().split(/\s+/)[0];
+  if (!commands.has(name)) {
+    printLine("Command not found: '" + name.slice(0, 24) + "'. Type 'help' for the list.", "err");
+    sfx.error();
+    return;
+  }
+  if (busy && !ALLOWED_WHILE_BUSY.includes(name)) {
+    printLine("A simulation is still running. Please wait, or press Reset.", "warn");
+    sfx.error();
+    return;
+  }
+  commands.get(name)();
+}
+
+/* =====================================================================
+   SECTION 7 — Easter egg
+   ===================================================================== */
+let eggActive = false;
+let eggClaimed = false;
+
+function triggerEasterEgg() {
+  if (eggActive) return;
+  eggActive = true;
+  rainMode = "neo";
+  sfx.glitch();
+  $("eggText").textContent = "WAKE UP, AGENT... THE MATRIX HAS YOU.";
+  $("egg").classList.remove("hidden");
+  printLine("EASTER EGG FOUND! Welcome to the real world, Neo.", "ok glitch");
+  if (!eggClaimed) {
+    eggClaimed = true;
+    updateScore(50);
+  } else {
+    printLine("(Bonus points can only be claimed once.)", "dim");
+  }
+  later(() => {
+    $("egg").classList.add("hidden");
+    rainMode = "normal";
+    eggActive = false;
+    sfx.win();
+  }, 4500);
+}
+
+// Konami code: Up Up Down Down Left Right Left Right B A also triggers the egg.
+const KONAMI = ["ArrowUp", "ArrowUp", "ArrowDown", "ArrowDown", "ArrowLeft", "ArrowRight", "ArrowLeft", "ArrowRight", "b", "a"];
+let konamiPos = 0;
+document.addEventListener("keydown", (e) => {
+  const key = e.key.length === 1 ? e.key.toLowerCase() : e.key;
+  konamiPos = (key === KONAMI[konamiPos]) ? konamiPos + 1 : (key === KONAMI[0] ? 1 : 0);
+  if (konamiPos === KONAMI.length) { konamiPos = 0; triggerEasterEgg(); }
+});
+
+/* =====================================================================
+   SECTION 8 — System status panel (simulated numbers)
+   ===================================================================== */
+const bootTime = Date.now();
+const statusData = [
+  { label: "CPU",     value: 34 },
+  { label: "MEMORY",  value: 52 },
+  { label: "NETWORK", value: 71 },
+  { label: "SHIELD",  value: 96 }
+];
+const meterFills = [];
+
+function buildMeters() {
+  const box = $("meters");
+  statusData.forEach((m) => {
+    const wrap = document.createElement("div");
+    wrap.className = "meter";
+    const row = document.createElement("div");
+    row.className = "row";
+    const name = document.createElement("span");
+    name.textContent = m.label;
+    const val = document.createElement("span");
+    const track = document.createElement("div");
+    track.className = "track";
+    const fill = document.createElement("div");
+    fill.className = "fill";
+    track.appendChild(fill);
+    row.append(name, val);
+    wrap.append(row, track);
+    box.appendChild(wrap);
+    meterFills.push({ fill, val });
+  });
+}
+
+// Nudges every fake metric a little, then redraws the bars.
+function refreshStatus() {
+  statusData.forEach((m, i) => {
+    m.value = clampProgress(m.value + (Math.random() * 20 - 10));
+    meterFills[i].fill.style.width = m.value + "%";
+    meterFills[i].fill.classList.toggle("hot", m.value > 85 && m.label !== "SHIELD");
+    meterFills[i].val.textContent = Math.round(m.value) + "%";
+  });
+}
+setInterval(() => { if (!document.hidden) refreshStatus(); }, 2000);
+
+/* =====================================================================
+   SECTION 9 — Secret Cipher mini-game
+   ===================================================================== */
+const caesar = (txt, shift) => txt.replace(/[A-Z]/g, (c) => String.fromCharCode((c.charCodeAt(0) - 65 + shift + 26) % 26 + 65));
+const reverseText = (txt) => txt.split("").reverse().join("");
+const toNumbers = (txt) => txt.split(" ").map((w) => w.split("").map((c) => c.charCodeAt(0) - 64).join("-")).join(" / ");
+
+// Each challenge knows its plain answer, how to scramble it and a hint.
+const CHALLENGES = [
+  { plain: "MEET AT DAWN",   encode: (t) => caesar(t, 3),   hint: "Caesar cipher: every letter was moved 3 places FORWARD." },
+  { plain: "TRUST NO ONE",   encode: reverseText,           hint: "The whole message was written backwards." },
+  { plain: "SECRET AGENT",   encode: toNumbers,             hint: "A=1, B=2, C=3 ... Z=26. Words are split with '/'." },
+  { plain: "ACCESS GRANTED", encode: (t) => caesar(t, 1),   hint: "Caesar cipher: every letter was moved 1 place FORWARD." },
+  { plain: "CODE RED",       encode: (t) => caesar(t, 5),   hint: "Caesar cipher: every letter was moved 5 places FORWARD." },
+  { plain: "PIZZA AT NOON",  encode: reverseText,           hint: "The whole message was written backwards." }
+];
+
+let score = 0;
+let order = [];              // shuffled challenge indexes
+let current = 0;             // position within order
+let solved = false;          // current challenge already answered correctly?
+let hintUsed = false;
+
+function setGameMsg(text, cls) {
+  const el = $("gameMsg");
+  el.textContent = text;
+  el.className = cls || "";
+}
+
+// Adds points to the score and plays a little pulse animation.
+function updateScore(points) {
+  score = Math.max(0, score + points);
+  const el = $("score");
+  el.textContent = String(score);
+  el.classList.remove("pulse");
+  void el.offsetWidth;       // restart the CSS animation
+  el.classList.add("pulse");
+}
+
+function shuffleOrder() {
+  order = CHALLENGES.map((_, i) => i);
+  for (let i = order.length - 1; i > 0; i--) {   // Fisher-Yates shuffle
+    const j = Math.floor(Math.random() * (i + 1));
+    [order[i], order[j]] = [order[j], order[i]];
+  }
+  current = 0;
+}
+
+function showChallenge() {
+  const c = CHALLENGES[order[current]];
+  solved = false;
+  hintUsed = false;
+  $("cipherText").textContent = c.encode(c.plain);
+  $("gameHint").textContent = "Challenge " + (current + 1) + " of " + CHALLENGES.length + ". Decode the message below.";
+  $("answerInput").value = "";
+  $("answerInput").disabled = false;
+  $("submitBtn").disabled = false;
+  setGameMsg("");
+}
+
+// Collapses extra spaces and ignores case so "  meet   at dawn " still counts.
+function normalizeAnswer(s) {
+  return String(s == null ? "" : s).trim().replace(/\s+/g, " ").toUpperCase();
+}
+
+function submitAnswer() {
+  if (solved) { setGameMsg("Already solved! Press 'Next challenge'.", "info"); return; }
+  const guess = normalizeAnswer($("answerInput").value);
+  if (guess === "") {
+    setGameMsg("Type your answer first.", "warn");
+    sfx.error();
+    return;
+  }
+  const c = CHALLENGES[order[current]];
+  if (guess === c.plain) {
+    solved = true;
+    const pts = hintUsed ? 5 : 10;
+    updateScore(pts);
+    $("answerInput").disabled = true;
+    $("submitBtn").disabled = true;
+    const last = current === CHALLENGES.length - 1;
+    if (last) {
+      setGameMsg("MISSION COMPLETE! Final score: " + score + ". Press 'Restart game' to play again.", "ok");
+      sfx.win();
+    } else {
+      setGameMsg("Correct! +" + pts + " points. Press 'Next challenge'.", "ok");
+      sfx.ok();
+    }
+  } else {
+    setGameMsg("Wrong decode. Try again or press Hint.", "err");
+    sfx.error();
+  }
+}
+
+function nextChallenge() {
+  if (current >= CHALLENGES.length - 1) {
+    setGameMsg("That was the last one! Press 'Restart game' for a new round.", "info");
+    return;
+  }
+  current++;
+  showChallenge();
+}
+
+function restartGame() {
+  score = 0;
+  $("score").textContent = "0";
+  shuffleOrder();
+  showChallenge();
+  setGameMsg("New round started. Good luck, agent!", "info");
+}
+
+/* =====================================================================
+   SECTION 10 — Reset, events and boot
+   ===================================================================== */
+function resetAll() {
+  cancelAllTimers();
+  busy = false;
+  eggActive = false;
+  eggClaimed = false;
+  rainMode = "normal";
+  cmdInput.removeAttribute("aria-busy");
+  document.body.classList.remove("hacking");
+  $("egg").classList.add("hidden");
+  output.textContent = "";
+  history = [];
+  historyPos = 0;
+  restartGame();
+  setGameMsg("");
+  bootMessage();
+  sfx.ok();
+}
+
+function bootMessage() {
+  printLine("SECRET AGENT TERMINAL v1.0 - Student #" + STUDENT_NUMBER, "ok");
+  printLine("All activity here is a SIMULATION. Nothing real is accessed.", "dim");
+  printLine("Type 'help' and press Enter to begin.", "info");
+}
+
+function buildChips() {
+  ["help", "scan", "status", "decrypt", "hack", "date", "secret", "game", "about", "clear"].forEach((name) => {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.textContent = name;
+    b.setAttribute("aria-label", "Run command " + name);
+    b.addEventListener("click", () => { runCommand(name); cmdInput.focus(); });
+    $("chips").appendChild(b);
+  });
+}
+
+$("cmdForm").addEventListener("submit", (e) => {
+  e.preventDefault();
+  const value = cmdInput.value;
+  cmdInput.value = "";
+  runCommand(value);
+});
+
+// Arrow keys walk through previously typed commands.
+cmdInput.addEventListener("keydown", (e) => {
+  if (e.key === "ArrowUp" && history.length) {
+    e.preventDefault();
+    historyPos = Math.max(0, historyPos - 1);
+    cmdInput.value = history[historyPos];
+  } else if (e.key === "ArrowDown" && history.length) {
+    e.preventDefault();
+    historyPos = Math.min(history.length, historyPos + 1);
+    cmdInput.value = history[historyPos] || "";
+  } else if (e.key.length === 1) {
+    sfx.key();
+  }
+});
+
+$("submitBtn").addEventListener("click", submitAnswer);
+$("answerInput").addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); submitAnswer(); } });
+$("nextBtn").addEventListener("click", nextChallenge);
+$("restartGameBtn").addEventListener("click", restartGame);
+$("hintBtn").addEventListener("click", () => {
+  hintUsed = true;
+  setGameMsg("Hint: " + CHALLENGES[order[current]].hint + " (correct answer now gives +5)", "info");
+  sfx.key();
+});
+$("resetBtn").addEventListener("click", resetAll);
+$("soundBtn").addEventListener("click", () => setSound(!soundOn));
+
+// The intro button is the first user gesture, so audio is allowed from here on.
+$("startBtn").addEventListener("click", () => {
+  $("intro").classList.add("hidden");
+  getAudio();
+  sfx.ok();
+  cmdInput.focus();
+});
+
+// Clicking the terminal output focuses the input (like a real terminal).
+output.addEventListener("click", () => { if (!window.getSelection().toString()) cmdInput.focus(); });
+
+buildMeters();
+refreshStatus();
+buildChips();
+shuffleOrder();
+showChallenge();
+bootMessage();
+resizeRain();
+startRain();
+</script>
+</body>
+</html>

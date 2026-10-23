@@ -1,0 +1,17 @@
+AI DEBUGGING NOTE  -  Student #150096725136 (Saiyash Poojari)
+==============================================================
+
+Fill in the blanks ONLY after you have really broken the code and seen the error.
+
+One-sentence reflection (required):
+
+I intentionally broke [FUNCTION OR VARIABLE: ________] by [MISTAKE: ________________]. The browser reported [ACTUAL ERROR: copy the red Console text here], and AI helped me identify and correct the problem.
+
+Extra details to record (optional but helpful):
+- Original line:  ______________________________
+- Broken line:    ______________________________
+- File and line number shown in the Console: ______________________
+- Feature that stopped working: ______________________
+- Prompt I gave the AI: ______________________
+- What the AI told me to change: ______________________
+- How I verified the fix: ______________________
