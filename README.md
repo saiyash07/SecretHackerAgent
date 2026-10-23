@@ -5,7 +5,7 @@
 | **Name** | Saiyash Poojari |
 | **Student Number** | 150096725136 |
 | **Project** | The Secret Agent Hacker Terminal & Mini-Game |
-| **Live Website** | https://saiyash07.github.io/SecretHackerAgent/ *(expected URL – not yet verified; test it after enabling Pages)* |
+| **Live Website** | https://secrethackeragent.vercel.app/ |
 | **GitHub Repository** | https://github.com/saiyash07/SecretHackerAgent |
 
 **Course Unit:** Unit 3 — AI Applications  **Course Outcome:** CO3-P
