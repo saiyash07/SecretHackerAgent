@@ -1,17 +1,70 @@
 AI DEBUGGING NOTE  -  Student #150096725136 (Saiyash Poojari)
+Project: The Secret Agent Hacker Terminal & Mini-Game
 ==============================================================
 
-Fill in the blanks ONLY after you have really broken the code and seen the error.
+ONE-SENTENCE REFLECTION (required)
+----------------------------------
+I intentionally broke the function updateScore() by renaming its definition to updateScor() without updating the place that calls it. The browser reported "Uncaught ReferenceError: updateScore is not defined" (index.html, line 762, inside submitAnswer), and AI helped me identify and correct the problem.
 
-One-sentence reflection (required):
+!! BEFORE SUBMITTING: repeat the break yourself once in Chrome (right-click > Inspect > Console)
+   and confirm the Console shows the same red error. Replace the text above with what YOU see
+   (and the line number) if it differs. The error above was reproduced with an automated
+   headless Google Chrome run on 2026-10-23, not typed by hand.
 
-I intentionally broke [FUNCTION OR VARIABLE: ________] by [MISTAKE: ________________]. The browser reported [ACTUAL ERROR: copy the red Console text here], and AI helped me identify and correct the problem.
+DEBUGGING DETAILS
+-----------------
+- Original line (index.html, line 715):  function updateScore(points) {
+- Broken line:                           function updateScor(points) {
+- Why it breaks: submitAnswer() (line 762) and triggerEasterEgg() (line 619) still call updateScore(),
+  but no function with that name exists any more.
+- Feature that stopped working: the cipher game score. A correct answer no longer adds points,
+  the "Correct!" message never appears, and the Submit button then stays enabled. The `neo` bonus also breaks.
+- Page still loads normally because updateScore() is only called after a click/command.
+- How to reproduce: play the game, type the correct decode, click Submit, then check the Console.
+- Fix: rename the definition back to  function updateScore(points) {
+- Verification: reload, solve a puzzle -> score rises by 10 (or 5 with Hint), Console has no red error.
+- Prompt given to AI: "My JavaScript app shows this Console error: Uncaught ReferenceError:
+  updateScore is not defined (line 762). Here is submitAnswer() and my updateScor() function.
+  Explain the cause and give the corrected code."
+- Backup of the working version: index.backup-working.html (kept on my computer).
 
-Extra details to record (optional but helpful):
-- Original line:  ______________________________
-- Broken line:    ______________________________
-- File and line number shown in the Console: ______________________
-- Feature that stopped working: ______________________
-- Prompt I gave the AI: ______________________
-- What the AI told me to change: ______________________
-- How I verified the fix: ______________________
+TEST RESULTS (actually run on 2026-10-23)
+-----------------------------------------
+Method: index.html was loaded in headless Google Chrome with a temporary test script that drove the
+real page code (not included in the submission). Result: 24 of 24 checks PASSED, 0 uncaught errors.
+
+ 1. PASS  Empty command shows a warning
+ 2. PASS  Invalid command shows "Command not found"
+ 3. PASS  help lists all commands
+ 4. PASS  HTML typed into the terminal (<img onerror>) is shown as plain text, no element created
+ 5. PASS  status, date, about and secret commands run
+ 6. PASS  A second animated command is blocked while hack is running (only one progress bar)
+ 7. PASS  hack sets the busy flag
+ 8. PASS  hack finishes at 100% and prints ACCESS GRANTED, busy flag released
+ 9. PASS  scan completes
+10. PASS  decrypt completes
+11. PASS  clear empties the terminal
+12. PASS  Empty game answer is rejected, score unchanged
+13. PASS  Wrong game answer is rejected, score unchanged
+14. PASS  Correct answer with extra spaces and lowercase scores +10
+15. PASS  Next challenge loads a new puzzle
+16. PASS  Answer after using Hint scores +5
+17. PASS  Finishing all 6 puzzles shows MISSION COMPLETE
+18. PASS  Restart game resets score to 0
+19. PASS  neo Easter egg shows the overlay and gives +50 once
+20. PASS  Easter egg overlay hides itself and rain colour returns to normal
+21. PASS  reset restores the score and the terminal
+22. PASS  Sound toggle switches on and off
+23. PASS  clampProgress: "", NaN, "abc", undefined, -10, 0 -> 0; 150 -> 100; 50 -> 50
+24. PASS  No uncaught errors during the whole run
+
+Built-in unit tests (the three console.assert lines in index.html, run at page load):
+ - clampProgress(50) === 50    PASS (no assertion message in the Console)
+ - clampProgress(0) === 0      PASS
+ - clampProgress(-10) === 0    PASS
+Also confirmed in Node.js: clampProgress("") returns 0 (empty-string case).
+
+Broken-version run: with updateScor() the same Chrome test logged
+"Uncaught ReferenceError: updateScore is not defined" at line 762, then 24-check run was stopped.
+
+NOT TESTED BY ME (do these by hand): real speaker sound, how the page looks on a phone, and the live GitHub Pages site.
